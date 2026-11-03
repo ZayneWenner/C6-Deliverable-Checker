@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>交付物体检站 · 30 秒查出缺哪个交付物、哪个名字不命中</title>
+<meta name="description" content="把文件拖进来，30 秒知道：缺哪个交付物、哪个文件名不命中 EduSeed 平台规则、该怎么改。">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">✓</div>
+    <div class="brandtext">
+      <h1>交付物体检站</h1>
+      <p class="tag">把文件拖进来，30 秒知道：缺哪个交付物、哪个名字不命中平台规则、该怎么改。</p>
+    </div>
+  </div>
+  <div class="topright">
+    <span id="modeBadge" class="badge rule">规则模式</span>
+    <button id="btnSettings" class="ghost small" type="button">AI 设置</button>
+  </div>
+</header>
+
+<main>
+  <section class="card step">
+    <div class="stephead"><span class="num">1</span><h2>选择挑战</h2></div>
+    <div class="row">
+      <input id="chSearch" type="search" placeholder="搜索挑战编号或名称，如 C6 / GitHub" autocomplete="off">
+      <select id="chSelect" aria-label="挑战列表"></select>
+    </div>
+    <div id="chMeta" class="meta"></div>
+  </section>
+
+  <section class="card step">
+    <div class="stephead"><span class="num">2</span><h2>放入你的文件</h2></div>
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="drop" type="button">拖入文件</button>
+      <button class="tab" data-tab="paste" type="button">粘贴清单</button>
+    </div>
+
+    <div id="pane-drop">
+      <div id="drop" class="drop">
+        <div class="dropicon">＋</div>
+        <p class="droptitle">把文件或整个文件夹拖到这里</p>
+        <p class="dropsub">也可以点下面的按钮选择。文件只留在你的浏览器里，不会上传到任何服务器。</p>
+        <button id="btnPick" class="ghost" type="button">选择文件</button>
+        <input id="fileInput" type="file" multiple hidden>
+      </div>
+    </div>
+
+    <div id="pane-paste" hidden>
+      <textarea id="pasteBox" rows="6" placeholder="每行一个文件名，例如：&#10;贾静文_C6_AI日志.md&#10;贾静文_C6_app链接.md&#10;README.md"></textarea>
+      <div class="row end">
+        <button id="btnParse" class="ghost small" type="button">加入清单</button>
+      </div>
+    </div>
+
+    <div id="fileList" class="chips"></div>
+  </section>
+
+  <section class="card actions">
+    <button id="btnCheck" class="primary" type="button">开始体检</button>
+    <button id="btnReset" class="ghost small" type="button">清空重来</button>
+    <span id="hint" class="hint"></span>
+  </section>
+
+  <section id="result" hidden>
+    <div id="verdict" class="card verdict"></div>
+
+    <div class="card">
+      <h3>交付物命中情况</h3>
+      <div class="tablewrap">
+        <table id="tblPatterns">
+          <thead><tr><th>平台要求的交付物</th><th>命中文件</th><th>结论</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>没被用上的文件 <span class="muted" id="unmatchedCount"></span></h3>
+      <div id="unmatched" class="unmatched"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead">
+        <h3>AI 归因与整改建议</h3>
+        <button id="btnAI" class="primary small" type="button">用 AI 分析</button>
+      </div>
+      <p class="muted small">AI 会读未归因文件的开头内容，判断它到底属于哪个交付物、该改成什么名字、还缺哪些内容。</p>
+      <div id="aiOut" class="aiout"></div>
+    </div>
+
+    <div class="card">
+      <h3>拿走这份报告</h3>
+      <div class="row">
+        <button id="btnMD" class="ghost small" type="button">下载 Markdown</button>
+        <button id="btnCSV" class="ghost small" type="button">下载 CSV</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>交付物体检站 · 规则来自 EduSeed 平台 <code>list-challenges</code>（2026-11-03 抓取，20 个挑战）。文件不上传，全部在浏览器内完成。</p>
+</footer>
+
+<dialog id="settings">
+  <form method="dialog" class="dialogform">
+    <h3>AI 设置</h3>
+    <p class="muted small">AI 增强需要你自己的模型 Key。Key 只保存在这台设备的浏览器 localStorage 里，直接发给你选择的模型服务商，不经过本站任何服务器。</p>
+    <label>服务商
+      <select id="cfgProvider">
+        <option value="openai">OpenAI 兼容（OpenAI / DeepSeek / 通义 / 智谱…）</option>
+        <option value="anthropic">Anthropic Claude</option>
+      </select>
+    </label>
+    <label>接口地址
+      <input id="cfgBase" type="text" placeholder="https://api.openai.com/v1">
+    </label>
+    <label>模型
+      <input id="cfgModel" type="text" placeholder="gpt-4o-mini">
+    </label>
+    <label>API Key
+      <input id="cfgKey" type="password" placeholder="sk-...">
+    </label>
+    <div class="row end">
+      <button id="btnSaveCfg" class="primary small" value="save" type="button">保存</button>
+      <button id="btnClearCfg" class="ghost small" value="cancel" type="button">清除 Key</button>
+      <button class="ghost small" value="close" type="submit">关闭</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="assets/data.js"></script>
+<script src="assets/engine.js"></script>
+<script src="assets/ai.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
