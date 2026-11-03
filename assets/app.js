@@ -471,6 +471,42 @@
     });
   }
 
+  /* ---- 示例数据：首次使用或演示时，一键看到体检效果（?sample=ok 展示全部命中） ---- */
+  var SAMPLES = {
+    mixed: [
+      '贾静文_C6_app链接.md',
+      '贾静文_C6_repo链接.md',
+      'AI协作日志.md',
+      '贾静文_C6_拿来说明.md'
+    ],
+    ok: [
+      '贾静文_C6_app链接.md',
+      '贾静文_C6_demo.mp4',
+      '贾静文_C6_repo链接.md',
+      '贾静文_C6_AI日志.md'
+    ]
+  };
+
+  function loadSample(key) {
+    var names = SAMPLES[key] || SAMPLES.mixed;
+    state.files = names.map(function (n) {
+      var isVideo = /\.mp4$/i.test(n);
+      return {
+        name: n,
+        size: isVideo ? 1048576 : 1024,
+        isText: !isVideo
+      };
+    });
+    renderChips();
+    runCheck();
+  }
+
+  function maybeLoadSample() {
+    var m = /[?&]sample=([a-z]+)/i.exec(location.search);
+    if (!m) return;
+    loadSample(String(m[1]).toLowerCase() === 'ok' ? 'ok' : 'mixed');
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bind();
     renderChallengeOptions('');
@@ -481,5 +517,6 @@
       $('chSelect').value = c6.id;
       onSelectChallenge();
     }
+    maybeLoadSample();
   });
 })();
